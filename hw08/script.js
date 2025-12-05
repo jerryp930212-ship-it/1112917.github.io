@@ -8,18 +8,18 @@ const modal = document.getElementById("result-modal");
 const modalMsg = document.getElementById("modal-msg");
 const modalBtn = document.getElementById("modal-btn");
 
-// 計分板與新按鈕
+// 計分板元素
 const scoreXEl = document.getElementById("score-x");
 const scoreOEl = document.getElementById("score-o");
 const scoreDrawEl = document.getElementById("score-draw");
-const btnResetScore = document.getElementById("reset-score"); // <--- 新增：取得重置分數按鈕
+const btnResetScore = document.getElementById("reset-score"); // 取得新按鈕
 
 // 遊戲狀態變數
 let board;
 let current;
 let active;
 
-// 分數紀錄 (這行必須放在 init 函式外面！)
+// 分數紀錄
 let scores = {
   x: 0,
   o: 0,
@@ -32,7 +32,7 @@ const WIN_LINES = [
   [0,4,8],[2,4,6]
 ];
 
-// 初始化 (重開一局)
+// 初始化 (只重置盤面，不重置分數)
 function init(){
   board = Array(9).fill('');
   current = 'X';
@@ -46,18 +46,16 @@ function init(){
 
   turnEl.textContent = current;
   stateEl.textContent = "";
-  modal.classList.remove("show");
   
-  // ★重要：請確認這裡面「沒有」重置 scores 的程式碼
+  // 隱藏彈窗
+  if(modal) modal.classList.remove("show");
 }
 
-// 切換玩家
 function switchTurn(){
   current = (current === 'X') ? 'O' : 'X';
   turnEl.textContent = current;
 }
 
-// 判斷勝負
 function evaluate(){
   for(const line of WIN_LINES){
     const [a,b,c] = line;
@@ -69,22 +67,18 @@ function evaluate(){
   return { finished:false };
 }
 
-// 更新畫面上的分數
 function updateScoreboard() {
-  scoreXEl.textContent = scores.x;
-  scoreOEl.textContent = scores.o;
-  scoreDrawEl.textContent = scores.draw;
+  if(scoreXEl) scoreXEl.textContent = scores.x;
+  if(scoreOEl) scoreOEl.textContent = scores.o;
+  if(scoreDrawEl) scoreDrawEl.textContent = scores.draw;
 }
 
-// ▼▼▼ 新增：專門用來重置分數的函式 ▼▼▼
+// 重置分數函式
 function resetScores() {
-  // 詢問玩家是否確定 (選用，避免誤按)
   if(!confirm("確定要將戰績歸零嗎？")) return;
-
   scores = { x: 0, o: 0, draw: 0 };
   updateScoreboard();
 }
-// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
 // 結束遊戲
 function endGame({winner, line}){
@@ -109,10 +103,12 @@ function endGame({winner, line}){
 
   cells.forEach(c => c.disabled = true);
 
-  setTimeout(() => {
-    modalMsg.textContent = message;
-    modal.classList.add("show");
-  }, 300);
+  if(modal) {
+    setTimeout(() => {
+        if(modalMsg) modalMsg.textContent = message;
+        modal.classList.add("show");
+    }, 300);
+  }
 }
 
 // 落子
@@ -141,12 +137,22 @@ cells.forEach(cell=>{
   });
 });
 
-btnReset.addEventListener("click", init);
-modalBtn.addEventListener("click", init);
+// ★ 安全綁定：先確認按鈕存在才綁定事件，避免報錯 ★
+if(btnReset) {
+    btnReset.addEventListener("click", init);
+} else {
+    console.error("錯誤：找不到 id='reset' 的按鈕");
+}
 
-// ▼▼▼ 新增：綁定重置分數按鈕 ▼▼▼
-btnResetScore.addEventListener("click", resetScores);
-// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+if(modalBtn) {
+    modalBtn.addEventListener("click", init);
+}
+
+if(btnResetScore) {
+    btnResetScore.addEventListener("click", resetScores);
+} else {
+    console.warn("警告：找不到 id='reset-score' 的按鈕，重置分數功能無法使用");
+}
 
 // 啟動
 init();
