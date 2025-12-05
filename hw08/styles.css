@@ -75,6 +75,11 @@ h1{
   
   /* 修正字體垂直對齊的微小偏差 */
   line-height: 1; 
+
+  aspect-ratio: 1 / 1; /* 強制寬高比為 1:1，即正方形 */
+  display: flex;       /* 使用 Flexbox 進行佈局 */
+  justify-content: center; /* 水平居中文字 */
+  align-items: center;     /* 垂直居中文字 */
 }
 
 /* 點擊效果 (選用) */
