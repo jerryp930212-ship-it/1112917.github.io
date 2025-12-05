@@ -55,6 +55,10 @@ h1{
   place-items:center;
   cursor:pointer;
   user-select:none;
+
+  /* 加入以下兩行解決長方形問題 */
+  aspect-ratio: 1 / 1;
+  width: 100%;
 }
 
 .cell.x{ color:var(--x); }
