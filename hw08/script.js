@@ -72,8 +72,7 @@ function place(idx){
   board[idx] = current;
   const cell = cells[idx];
 
-  //cell.textContent = current;
-  cell.setAttribute("data-mark", current);
+  cell.textContent = current;
   cell.classList.add(current.toLowerCase());
 
   const result = evaluate();
