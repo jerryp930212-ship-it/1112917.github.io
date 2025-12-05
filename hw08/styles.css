@@ -179,3 +179,40 @@ button:disabled{
 .modal-content button:hover {
   filter: brightness(1.1);
 }
+
+/* --- 戰局紀錄樣式 --- */
+.scoreboard {
+  display: flex;
+  justify-content: center;
+  gap: 32px; /* 每個分數之間的距離 */
+  margin-top: 24px;
+  padding: 16px 32px;
+  background: rgba(255, 255, 255, 0.05); /* 淡淡的背景 */
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+}
+
+.score-item .label {
+  font-size: 14px;
+  color: #8da2fb; /* 標籤顏色 */
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.score-item .value {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+/* 讓分數顏色對應 X 和 O */
+.x-score .value { color: var(--x); }
+.o-score .value { color: var(--o); }
+.draw-score .value { color: #fff; opacity: 0.7; }
