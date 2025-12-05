@@ -65,15 +65,6 @@ h1{
   user-select:none;
 }
 
-.cell::before{
-  content: attr(data-mark);
-  position: absolute;
-  inset: 0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
 .cell.x{ color:var(--x); }
 .cell.o{ color:var(--o); }
 .cell.win{ background:var(--win); color:#000; }
