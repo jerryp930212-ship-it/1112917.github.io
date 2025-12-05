@@ -4,16 +4,26 @@ const cells = Array.from(document.querySelectorAll(".cell"));
 const btnReset = document.getElementById("reset");
 const turnEl = document.getElementById("turn");
 const stateEl = document.getElementById("state");
-
-// --- 新增：取得彈窗相關元素 ---
 const modal = document.getElementById("result-modal");
 const modalMsg = document.getElementById("modal-msg");
 const modalBtn = document.getElementById("modal-btn");
+
+// --- 新增：取得計分板元素 ---
+const scoreXEl = document.getElementById("score-x");
+const scoreOEl = document.getElementById("score-o");
+const scoreDrawEl = document.getElementById("score-draw");
 
 // 遊戲狀態變數
 let board;
 let current;
 let active;
+
+// --- 新增：紀錄分數變數 ---
+let scores = {
+  x: 0,
+  o: 0,
+  draw: 0
+};
 
 const WIN_LINES = [
   [0,1,2],[3,4,5],[6,7,8],
@@ -35,18 +45,14 @@ function init(){
 
   turnEl.textContent = current;
   stateEl.textContent = "";
-
-  // --- 新增：確保彈窗關閉 ---
   modal.classList.remove("show");
 }
 
-// 換手
 function switchTurn(){
   current = (current === 'X') ? 'O' : 'X';
   turnEl.textContent = current;
 }
 
-// 判斷勝負 (維持原樣)
 function evaluate(){
   for(const line of WIN_LINES){
     const [a,b,c] = line;
@@ -58,6 +64,13 @@ function evaluate(){
   return { finished:false };
 }
 
+// --- 修改：更新分數邏輯 ---
+function updateScoreboard() {
+  scoreXEl.textContent = scores.x;
+  scoreOEl.textContent = scores.o;
+  scoreDrawEl.textContent = scores.draw;
+}
+
 // 結束遊戲
 function endGame({winner, line}){
   active = false;
@@ -65,23 +78,32 @@ function endGame({winner, line}){
 
   if(winner){
     message = `${winner} 勝利！`;
-    //stateEl.textContent = message; // 原本的文字提示保留或是拿掉都可以
+    stateEl.textContent = message;
     line.forEach(i => cells[i].classList.add("win"));
+    
+    // --- 新增：更新勝利者分數 ---
+    if(winner === 'X') scores.x++;
+    else scores.o++;
+    
   }else{
     message = "平手！";
     stateEl.textContent = message;
+    
+    // --- 新增：更新平手分數 ---
+    scores.draw++;
   }
+
+  // --- 新增：呼叫更新畫面函數 ---
+  updateScoreboard();
 
   cells.forEach(c => c.disabled = true);
 
-  // --- 新增：延遲一點點跳出彈窗，體驗較好 ---
   setTimeout(() => {
     modalMsg.textContent = message;
     modal.classList.add("show");
-  }, 300); // 0.3秒後跳出
+  }, 300);
 }
 
-// 落子 (維持原樣)
 function place(idx){
   if(!active || board[idx]) return;
 
@@ -99,7 +121,6 @@ function place(idx){
   }
 }
 
-// 事件
 cells.forEach(cell=>{
   cell.addEventListener("click", ()=>{
     const idx = +cell.getAttribute("data-idx");
@@ -108,9 +129,6 @@ cells.forEach(cell=>{
 });
 
 btnReset.addEventListener("click", init);
-
-// --- 新增：彈窗按鈕事件 ---
 modalBtn.addEventListener("click", init);
 
-// 啟動
 init();
