@@ -65,7 +65,7 @@ function endGame({winner, line}){
 
   if(winner){
     message = `${winner} 勝利！`;
-    stateEl.textContent = message; // 原本的文字提示保留或是拿掉都可以
+    //stateEl.textContent = message; // 原本的文字提示保留或是拿掉都可以
     line.forEach(i => cells[i].classList.add("win"));
   }else{
     message = "平手！";
