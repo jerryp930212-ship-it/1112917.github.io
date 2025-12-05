@@ -46,22 +46,24 @@ h1{
 }
 
 .cell{
+  position: relative;
+  width: 100%;
+  padding-top: 100%;   /* 讓格子永遠正方形 */
+
   border-radius:10px;
   background:linear-gradient(180deg,#121430,#0e1030);
   border:1px solid rgba(255,255,255,0.03);
+
   font-size:48px;
   font-weight:800;
-  display:grid;
-  place-items:center;
+  color:var(--text);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
   cursor:pointer;
   user-select:none;
-  -webkit-tap-highlight-color:transparent;
-
-  /* 加入以下兩行解決長方形問題 */
-  aspect-ratio: 1 / 1;
-  width: 100%;
 }
-
 
 .cell.x{ color:var(--x); }
 .cell.o{ color:var(--o); }
