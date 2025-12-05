@@ -48,7 +48,7 @@ h1{
 .cell{
   position: relative;
   width: 100%;
-  padding-top: 100%;   /* 讓格子永遠正方形 */
+  padding-top: 100%; /* 高度 = 寬度 → 完美正方形 */
 
   border-radius:10px;
   background:linear-gradient(180deg,#121430,#0e1030);
@@ -61,8 +61,19 @@ h1{
   display:flex;
   align-items:center;
   justify-content:center;
+
   cursor:pointer;
   user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.cell::before{
+  content: attr(data-mark);
+  position: absolute;
+  inset: 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .cell.x{ color:var(--x); }
