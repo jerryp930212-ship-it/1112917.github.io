@@ -42,73 +42,36 @@ h1{
   padding:12px;
   border-radius:14px;
   width:min(560px, 92%);
-  /* 修改：加入 margin: 0 auto 確保棋盤在容器內水平置中 */
-  margin: 0 auto; 
-  /* 修改：直接在父層設定比例，或者靠內容撐開 */
-  aspect-ratio: 1/1; 
+  aspect-ratio:1/1;
 }
 
 .cell{
-  /* 修改：移除 padding-top: 100% */
-  /* padding-top: 100%; <--- 這行是問題主因 */
-  /* 修改：改用 aspect-ratio 維持正方形 */
-  aspect-ratio: 1/1; 
-  
-  width: 100%;
-  position: relative;
-  
   border-radius:10px;
   background:linear-gradient(180deg,#121430,#0e1030);
   border:1px solid rgba(255,255,255,0.03);
-
-  /* 修改：字體調大一點，看起來比較像棋子 */
-  font-size:64px; 
+  font-size:48px;
   font-weight:800;
-  color:var(--text);
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  display:grid;
+  place-items:center;
   cursor:pointer;
   user-select:none;
-  
-  /* 修正字體垂直對齊的微小偏差 */
-  line-height: 1; 
 }
 
-/* 點擊效果 (選用) */
-.cell:active {
-    transform: scale(0.98);
-}
-
-.cell.x{ color:var(--x); text-shadow: 0 0 10px rgba(255, 107, 107, 0.4); }
-.cell.o{ color:var(--o); text-shadow: 0 0 10px rgba(77, 208, 225, 0.4); }
-.cell.win{ 
-    background:var(--win); 
-    color:#000; 
-    box-shadow: 0 0 15px var(--win);
-}
+.cell.x{ color:var(--x); }
+.cell.o{ color:var(--o); }
+.cell.win{ background:var(--win); color:#000; }
 
 .controls{
-  margin-top:24px; /* 距離拉開一點 */
-  display: flex;
-  justify-content: center;
-  gap: 16px; /* 按鈕之間的距離 */
+  margin-top:12px;
 }
 
 button{
-  padding:10px 20px;
+  padding:8px 12px;
   border-radius:10px;
   border:0;
   background:#21264a;
   color:var(--text);
   cursor:pointer;
-  font-size: 1rem;
-  transition: background 0.2s;
-}
-
-button:hover {
-    background: #2a305e;
 }
 
 button:disabled{
