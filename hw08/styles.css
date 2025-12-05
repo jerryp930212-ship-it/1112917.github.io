@@ -121,3 +121,61 @@ button:disabled{
   opacity:.5;
   cursor:not-allowed;
 }
+
+/* --- 彈出視窗樣式 --- */
+.modal {
+  display: none; /* 預設隱藏 */
+  position: fixed;
+  top: 0; 
+  left: 0;
+  width: 100%; 
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7); /* 背景變暗 */
+  z-index: 1000; /* 確保在最上層 */
+  justify-content: center; /* 水平置中 */
+  align-items: center;     /* 垂直置中 */
+  backdrop-filter: blur(5px); /* 背景模糊效果 (選用) */
+}
+
+.modal.show {
+  display: flex; /* 加上 show class 時顯示 */
+}
+
+.modal-content {
+  background: #21264a;
+  padding: 40px;
+  border-radius: 20px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  min-width: 300px;
+  
+  /* 進場動畫 */
+  transform: scale(0.8);
+  opacity: 0;
+  transition: all 0.3s ease-out;
+}
+
+.modal.show .modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 24px;
+  font-size: 32px;
+  color: var(--win); /* 使用原本定義的勝利色 */
+}
+
+.modal-content button {
+  font-size: 18px;
+  padding: 12px 32px;
+  background: var(--o); /* 按鈕顏色 */
+  color: #0f1226;
+  font-weight: bold;
+}
+
+.modal-content button:hover {
+  filter: brightness(1.1);
+}
