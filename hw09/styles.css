@@ -1,0 +1,218 @@
+:root{
+  --bg: #0f1226;
+  --text: #e7e8ee;
+  --x: #ff6b6b;
+  --o: #4dd0e1;
+  --win: #ffe066;
+}
+
+*{ box-sizing:border-box; }
+
+html,body{ height:100%; }
+
+body{
+  margin:0;
+  font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:grid;
+  place-items:center;
+  padding:24px;
+}
+
+.container{
+  width:min(720px, 96%);
+  text-align:center;
+}
+
+h1{
+  margin:0 0 16px 0;
+  font-size:24px;
+}
+
+.status{
+  margin-bottom:12px;
+}
+
+.board{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  padding:12px;
+  border-radius:14px;
+  width:min(560px, 92%);
+  /* 修改：加入 margin: 0 auto 確保棋盤在容器內水平置中 */
+  margin: 0 auto; 
+  /* 修改：直接在父層設定比例，或者靠內容撐開 */
+  aspect-ratio: 1/1; 
+}
+
+.cell{
+  /* 修改：移除 padding-top: 100% */
+  /* padding-top: 100%; <--- 這行是問題主因 */
+  
+  /* 修改：改用 aspect-ratio 維持正方形 */
+  aspect-ratio: 1/1; 
+  
+  width: 100%;
+  position: relative;
+  
+  border-radius:10px;
+  background:linear-gradient(180deg,#121430,#0e1030);
+  border:1px solid rgba(255,255,255,0.03);
+
+  /* 修改：字體調大一點，看起來比較像棋子 */
+  font-size:64px; 
+  font-weight:800;
+  color:var(--text);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  user-select:none;
+  
+  /* 修正字體垂直對齊的微小偏差 */
+  line-height: 1; 
+
+  aspect-ratio: 1 / 1; /* 強制寬高比為 1:1，即正方形 */
+  display: flex;       /* 使用 Flexbox 進行佈局 */
+  justify-content: center; /* 水平居中文字 */
+  align-items: center;     /* 垂直居中文字 */
+}
+
+/* 點擊效果 (選用) */
+.cell:active {
+    transform: scale(0.98);
+}
+
+.cell.x{ color:var(--x); text-shadow: 0 0 10px rgba(255, 107, 107, 0.4); }
+.cell.o{ color:var(--o); text-shadow: 0 0 10px rgba(77, 208, 225, 0.4); }
+.cell.win{ 
+    background:var(--win); 
+    color:#000; 
+    box-shadow: 0 0 15px var(--win);
+}
+
+.controls{
+  margin-top:24px; /* 距離拉開一點 */
+  display: flex;
+  justify-content: center;
+  gap: 16px; /* 按鈕之間的距離 */
+}
+
+button{
+  padding:10px 20px;
+  border-radius:10px;
+  border:0;
+  background:#21264a;
+  color:var(--text);
+  cursor:pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+
+button:hover {
+    background: #2a305e;
+}
+
+button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+
+/* --- 彈出視窗樣式 --- */
+.modal {
+  display: none; /* 預設隱藏 */
+  position: fixed;
+  top: 0; 
+  left: 0;
+  width: 100%; 
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7); /* 背景變暗 */
+  z-index: 1000; /* 確保在最上層 */
+  justify-content: center; /* 水平置中 */
+  align-items: center;     /* 垂直置中 */
+  backdrop-filter: blur(5px); /* 背景模糊效果 (選用) */
+}
+
+.modal.show {
+  display: flex; /* 加上 show class 時顯示 */
+}
+
+.modal-content {
+  background: #21264a;
+  padding: 40px;
+  border-radius: 20px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  min-width: 300px;
+  
+  /* 進場動畫 */
+  transform: scale(0.8);
+  opacity: 0;
+  transition: all 0.3s ease-out;
+}
+
+.modal.show .modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 24px;
+  font-size: 32px;
+  color: var(--win); /* 使用原本定義的勝利色 */
+}
+
+.modal-content button {
+  font-size: 18px;
+  padding: 12px 32px;
+  background: var(--o); /* 按鈕顏色 */
+  color: #0f1226;
+  font-weight: bold;
+}
+
+.modal-content button:hover {
+  filter: brightness(1.1);
+}
+
+/* --- 戰局紀錄樣式 --- */
+.scoreboard {
+  display: flex;
+  justify-content: center;
+  gap: 32px; /* 每個分數之間的距離 */
+  margin-top: 24px;
+  padding: 16px 32px;
+  background: rgba(255, 255, 255, 0.05); /* 淡淡的背景 */
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+}
+
+.score-item .label {
+  font-size: 14px;
+  color: #8da2fb; /* 標籤顏色 */
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.score-item .value {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+/* 讓分數顏色對應 X 和 O */
+.x-score .value { color: var(--x); }
+.o-score .value { color: var(--o); }
+.draw-score .value { color: #fff; opacity: 0.7; }
