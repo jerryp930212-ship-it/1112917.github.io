@@ -28,6 +28,12 @@
   </section>
 
   <div class="controls">
+    <label for="difficulty" style="margin-right: 8px; color: #aaa;">難度：</label>
+    <select id="difficulty" style="padding: 8px; border-radius: 6px; background: #21264a; color: white; border: 1px solid #444;">
+      <option value="normal">普通(講義邏輯)</option>
+      <option value="hard">無敵(Minimax)</option>
+    </select>
+    
     <button id="reset">重開一局</button>
     <button id="reset-score">重置分數</button>
     <button onclick="location.href='../index.html'">返回首頁</button>
