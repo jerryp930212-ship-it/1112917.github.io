@@ -1,17 +1,17 @@
 :root {
-  --bg: #0f1226;
-  --board-bg: #1e5128; /* 深綠色棋盤背景 */
-  --board-border: #14361b;
-  --text: #e7e8ee;
-  --cell-size: 50px; /* 格子大小 */
-  --gap: 4px;
+  --bg: #0f1226;          /* 網頁背景深藍色 */
+  --board-bg: #1e5128;    /* 棋盤格子深綠色 */
+  --board-border: #000;   /* 棋盤線條顏色 */
+  --text: #e7e8ee;        /* 文字顏色 */
+  --cell-size: 50px;      /* 格子大小，可依需求調整 */
+  --gap: 4px;             /* 格線寬度 */
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: 'Noto Sans TC', system-ui, sans-serif;
+  font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   display: flex;
@@ -27,9 +27,9 @@ body {
   text-align: center;
 }
 
-h1 { margin: 0 0 20px 0; font-size: 24px; }
+h1 { margin: 0 0 20px 0; font-size: 24px; letter-spacing: 1px; }
 
-/* --- 狀態列與分數 --- */
+/* --- 狀態列 (顯示分數與玩家) --- */
 .status-bar {
   display: flex;
   justify-content: space-between;
@@ -38,19 +38,21 @@ h1 { margin: 0 0 20px 0; font-size: 24px; }
   padding: 15px 20px;
   border-radius: 12px;
   margin-bottom: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .player-info {
   display: flex;
   align-items: center;
   gap: 10px;
-  opacity: 0.5;
+  opacity: 0.5; /* 非當前玩家半透明 */
   transition: opacity 0.3s;
 }
 
 .player-info.active {
   opacity: 1;
   font-weight: bold;
+  text-shadow: 0 0 10px rgba(255,255,255,0.2);
 }
 
 .icon {
@@ -59,34 +61,38 @@ h1 { margin: 0 0 20px 0; font-size: 24px; }
   border-radius: 50%;
   box-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
-.icon.black { background: #111; border: 1px solid #555; }
-.icon.white { background: #fff; border: 1px solid #ccc; }
+.icon.black { background: #000; border: 2px solid #555; }
+.icon.white { background: #fff; border: 2px solid #ccc; }
 
 .info { display: flex; flex-direction: column; text-align: left; }
 .score { font-size: 20px; font-weight: 800; }
-.vs { font-weight: bold; color: #666; }
+.name { font-size: 12px; color: #aaa; }
+.vs { font-weight: bold; color: #666; font-style: italic; }
 
 .msg-area {
   height: 24px;
   margin-bottom: 10px;
   color: #4dd0e1;
   font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 1px;
 }
 
-/* --- 棋盤與 3D 棋子 --- */
+/* --- 棋盤區域 --- */
 .board-container {
-  background: #111; /* 棋盤邊框底色 */
+  background: #000; /* 棋盤最底層改黑色，讓縫隙變明顯 */
   padding: 8px;
   border-radius: 8px;
   display: inline-block;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+  border: 1px solid #333;
 }
 
 .board {
   display: grid;
   grid-template-columns: repeat(8, var(--cell-size));
   grid-template-rows: repeat(8, var(--cell-size));
-  gap: var(--gap);
+  gap: var(--gap); /* 格子間距產生格線 */
   background: var(--board-border);
 }
 
@@ -96,82 +102,88 @@ h1 { margin: 0 0 20px 0; font-size: 24px; }
   height: 100%;
   position: relative;
   cursor: pointer;
-  perspective: 600px; /* 開啟 3D 透視 */
+  perspective: 800px; /* 3D 透視距離 */
 }
 
-/* 提示可下位置的小點 */
+/* --- 提示點 (Valid Moves) --- */
 .cell.valid::after {
   content: '';
   position: absolute;
-  width: 12px;
-  height: 12px;
-  background: rgba(0, 0, 0, 0.2);
+  width: 14px;
+  height: 14px;
+  background: rgba(0, 255, 127, 0.6); /* 亮綠色，確保深色背景看得到 */
   border-radius: 50%;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
+  box-shadow: 0 0 8px rgba(0, 255, 127, 0.4);
+  z-index: 5;
 }
+
 .cell.valid:hover::after {
-  background: rgba(0, 0, 0, 0.5);
-  transform: translate(-50%, -50%) scale(1.5);
+  background: rgba(0, 255, 127, 0.9);
+  transform: translate(-50%, -50%) scale(1.4);
+  cursor: pointer;
 }
 
-/* --- 棋子本體 (Container) --- */
+/* --- 3D 棋子結構 --- */
 .disc {
-  width: 80%;
-  height: 80%;
+  width: 85%;  /*稍微加大一點*/
+  height: 85%;
   position: absolute;
-  top: 10%; left: 10%;
-  transform-style: preserve-3d; /* 保留 3D 子元素 */
-  transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1); /* 翻轉動畫時間 */
+  top: 7.5%; 
+  left: 7.5%;
+  transform-style: preserve-3d; /* 關鍵：保留3D效果 */
+  transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1); /* 翻轉動畫 */
+  z-index: 10;
 }
 
-/* 棋子的兩面 */
+/* 棋子的兩個面 (正面黑，背面白) */
 .face {
   position: absolute;
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  backface-visibility: hidden; /* 背面隱藏 */
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.3);
+  backface-visibility: hidden; /* 關鍵：翻過去就看不到背面 */
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.6), 0 4px 6px rgba(0,0,0,0.4);
 }
 
-/* 黑棋面 (預設正面) */
 .face.front {
-  background: linear-gradient(135deg, #333, #000);
+  background: #111; /* 黑棋 */
+  border: 1px solid #444; /* 邊框增加立體感 */
   transform: rotateY(0deg);
 }
 
-/* 白棋面 (預設背面) */
 .face.back {
-  background: linear-gradient(135deg, #fff, #ddd);
+  background: #eee; /* 白棋 */
+  border: 1px solid #ccc;
   transform: rotateY(180deg);
 }
 
-/* --- 狀態控制 Class --- */
-/* 當棋盤說是白棋時，我們讓它轉 180 度顯示背面 */
+/* --- 棋子狀態控制 --- */
+/* 透過 class 旋轉整個 disc */
 .disc.is-white {
   transform: rotateY(180deg);
 }
 
-/* 當棋盤說是黑棋時，轉回 0 度 */
 .disc.is-black {
   transform: rotateY(0deg);
 }
 
-/* 剛下子時的落子動畫 */
+/* 落子時的彈跳動畫 */
 @keyframes popIn {
   0% { transform: scale(0); }
-  80% { transform: scale(1.1); }
+  70% { transform: scale(1.1); }
   100% { transform: scale(1); }
 }
 .disc.new {
-  animation: popIn 0.3s ease-out forwards;
+  /* 注意：這裡不能蓋掉 transition，所以分開寫或用 animation */
+  animation: popIn 0.3s ease-out;
 }
 
-/* --- 控制區 --- */
+/* --- 控制區按鈕 --- */
 .controls {
-  margin-top: 20px;
+  margin-top: 25px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -180,41 +192,80 @@ h1 { margin: 0 0 20px 0; font-size: 24px; }
 }
 
 select, button {
-  padding: 8px 16px;
-  border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.2);
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
   background: #21264a;
   color: white;
+  font-size: 14px;
   cursor: pointer;
+  transition: all 0.2s;
 }
-button:hover { background: #2a305e; }
 
-/* --- 彈窗樣式 --- */
+button:hover { 
+  background: #2a305e; 
+  transform: translateY(-2px);
+}
+
+select {
+  outline: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right .7em top 50%;
+  background-size: .65em auto;
+  padding-right: 2.5em;
+}
+
+/* --- 彈出視窗 --- */
 .modal {
-  display: none;
+  display: none; /* 預設隱藏 */
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0,0,0,0.85);
   justify-content: center;
   align-items: center;
-  z-index: 100;
-  backdrop-filter: blur(5px);
+  z-index: 1000;
+  backdrop-filter: blur(4px);
 }
+
 .modal.show { display: flex; }
+
 .modal-content {
-  background: #21264a;
-  padding: 30px;
-  border-radius: 16px;
+  background: #1a1d3a;
+  padding: 40px;
+  border-radius: 20px;
   text-align: center;
-  border: 1px solid #444;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 0 30px rgba(0,0,0,0.7);
+  min-width: 300px;
+  transform: scale(0.9);
+  animation: modalPop 0.3s forwards;
 }
-.modal-content h2 { color: #ffe066; margin-top: 0; }
-.modal-content p { font-size: 18px; margin-bottom: 24px; }
+
+@keyframes modalPop {
+  to { transform: scale(1); }
+}
+
+.modal-content h2 { color: #ffe066; margin-top: 0; font-size: 28px; }
+.modal-content p { font-size: 18px; margin-bottom: 24px; line-height: 1.6; }
+.modal-content button {
+  background: #4dd0e1;
+  color: #000;
+  font-weight: bold;
+  border: none;
+  font-size: 16px;
+  padding: 12px 30px;
+}
+.modal-content button:hover {
+  background: #26c6da;
+  transform: scale(1.05);
+}
 
 /* 手機版適配 */
 @media (max-width: 500px) {
   :root { --cell-size: 40px; }
   .status-bar { padding: 10px; }
-  .score { font-size: 16px; }
+  .score { font-size: 18px; }
+  .container { width: 95%; }
 }
