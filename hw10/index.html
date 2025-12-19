@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>1112917-HW10</title> <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main class="container">
+
+  <h1>HW10 - 3D 黑白棋 (AI 對戰)</h1>
+
+  <div class="status-bar">
+    <div class="player-info" id="p-black">
+      <div class="icon black"></div>
+      <div class="info">
+        <span class="name">玩家 (黑)</span>
+        <span class="score" id="score-black">2</span>
+      </div>
+    </div>
+    
+    <div class="vs">VS</div>
+
+    <div class="player-info" id="p-white">
+      <div class="icon white"></div>
+      <div class="info">
+        <span class="name">電腦 (白)</span>
+        <span class="score" id="score-white">2</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="msg-area" id="msg-area">輪到玩家下棋</div>
+
+  <div class="board-container">
+    <section id="board" class="board" aria-label="黑白棋棋盤"></section>
+  </div>
+
+  <div class="controls">
+    <label for="difficulty" style="color: #aaa;">電腦棋力：</label>
+    <select id="difficulty">
+      <option value="easy">基本 (貪婪)</option>
+      <option value="hard" selected>進階 (權重+預測)</option>
+    </select>
+
+    <button id="reset">重開一局</button>
+    <button onclick="location.href='../index.html'">返回首頁</button>
+  </div>
+
+</main>
+
+<div id="result-modal" class="modal">
+  <div class="modal-content">
+    <h2 id="modal-title">遊戲結束</h2>
+    <p id="modal-msg"></p>
+    <button id="modal-btn">再來一局</button>
+  </div>
+</div>
+
+<script src="script.js" defer></script>
+</body>
+</html>
