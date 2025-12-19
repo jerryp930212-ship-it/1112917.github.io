@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>1112917-HW10</title>
+  <style>
+    /* --- CSS 樣式區域 --- */
+    :root {
+      --bg: #0f1226;          /* 背景深藍色 */
+      --board-bg: #1e5128;    /* 棋盤格子深綠色 */
+      --line-color: #000;     /* 格線顏色 */
+      --text: #e7e8ee;        /* 文字顏色 */
+      --cell-size: 50px;      /* 格子大小 */
+      --gap: 4px;             /* 格線寬度 */
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+
+    h1 { margin: 0 0 20px 0; font-size: 24px; letter-spacing: 1px; }
+
+    /* --- 狀態列 --- */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px 20px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0.5;
+      transition: opacity 0.3s;
+    }
+
+    .player-info.active {
+      opacity: 1;
+      font-weight: bold;
+      text-shadow: 0 0 10px rgba(255,255,255,0.2);
+    }
+
+    .icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+    .icon.black { background: #000; border: 2px solid #555; }
+    .icon.white { background: #fff; border: 2px solid #ccc; }
+
+    .info { display: flex; flex-direction: column; text-align: left; }
+    .score { font-size: 20px; font-weight: 800; }
+    .name { font-size: 12px; color: #aaa; }
+    .vs { font-weight: bold; color: #666; font-style: italic; }
+
+    .msg-area {
+      height: 24px;
+      margin-bottom: 10px;
+      color: #4dd0e1;
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    /* --- 棋盤區域 --- */
+    .board-container {
+      background: #000; /* 讓格線看起來是黑色的 */
+      padding: 8px;
+      border-radius: 8px;
+      display: inline-block;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+      border: 1px solid #333;
+    }
+
+    .board {
+      display: grid;
+      /* 強制設定格線，避免變數失效 */
+      grid-template-columns: repeat(8, 50px);
+      grid-template-rows: repeat(8, 50px);
+      gap: 4px;
+      background-color: #000;
+    }
+
+    .cell {
+      background: #1e5128; /* 確保格子是綠色的 */
+      width: 100%;
+      height: 100%;
+      position: relative;
+      cursor: pointer;
+      perspective: 800px; /* 3D 透視 */
+    }
+
+    /* --- 提示點 (Valid Moves) --- */
+    .cell.valid::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: #00ff7f; /* 亮綠色 */
+      border-radius: 50%;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      box-shadow: 0 0 8px rgba(0, 255, 127, 0.6);
+      z-index: 5;
+    }
+    
+    .cell.valid:hover::after {
+        transform: translate(-50%, -50%) scale(1.5);
+        background: #fff;
+    }
+
+    /* --- 3D 棋子結構 --- */
+    .disc {
+      width: 85%;
+      height: 85%;
+      position: absolute;
+      top: 7.5%; 
+      left: 7.5%;
+      transform-style: preserve-3d; 
+      transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+      z-index: 10;
+    }
+
+    /* 棋子的兩個面 */
+    .face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      backface-visibility: hidden; /* 翻轉後隱藏背面 */
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.6), 0 4px 6px rgba(0,0,0,0.4);
+    }
+
+    .face.front {
+      background: #111; /* 黑棋 */
+      border: 1px solid #444;
+      transform: rotateY(0deg);
+    }
+
+    .face.back {
+      background: #eee; /* 白棋 */
+      border: 1px solid #ccc;
+      transform: rotateY(180deg);
+    }
+
+    /* 狀態控制 */
+    .disc.is-white { transform: rotateY(180deg); }
+    .disc.is-black { transform: rotateY(0deg); }
+
+    /* 落子動畫 */
+    @keyframes popIn {
+      0% { transform: scale(0); }
+      70% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .disc.new { animation: popIn 0.3s ease-out; }
+
+    /* --- 控制區 --- */
+    .controls {
+      margin-top: 25px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    select, button {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: #21264a;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:hover { background: #2a305e; }
+
+    /* --- 彈出視窗 --- */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+    .modal.show { display: flex; }
+    
+    .modal-content {
+      background: #1a1d3a;
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 0 30px rgba(0,0,0,0.7);
+    }
+    .modal-content h2 { color: #ffe066; margin-top: 0; }
+    .modal-content button {
+      background: #4dd0e1;
+      color: #000;
+      border: none;
+      padding: 10px 30px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<main class="container">
+  <h1>HW10 - 3D 黑白棋 (AI 對戰)</h1>
+
+  <div class="status-bar">
+    <div class="player-info" id="p-black">
+      <div class="icon black"></div>
+      <div class="info">
+        <span class="name">玩家 (黑)</span>
+        <span class="score" id="score-black">2</span>
+      </div>
+    </div>
+    <div class="vs">VS</div>
+    <div class="player-info" id="p-white">
+      <div class="icon white"></div>
+      <div class="info">
+        <span class="name">電腦 (白)</span>
+        <span class="score" id="score-white">2</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="msg-area" id="msg-area">輪到玩家下棋</div>
+
+  <div class="board-container">
+    <section id="board" class="board" aria-label="黑白棋棋盤"></section>
+  </div>
+
+  <div class="controls">
+    <label for="difficulty" style="color: #aaa;">電腦棋力：</label>
+    <select id="difficulty">
+      <option value="easy">基本 (貪婪)</option>
+      <option value="hard" selected>進階 (權重+預測)</option>
+    </select>
+    <button id="reset">重開一局</button>
+    <button onclick="location.href='../index.html'">返回首頁</button>
+  </div>
+</main>
+
+<div id="result-modal" class="modal">
+  <div class="modal-content">
+    <h2 id="modal-title">遊戲結束</h2>
+    <p id="modal-msg"></p>
+    <button id="modal-btn">再來一局</button>
+  </div>
+</div>
+
+<script>
+// --- JavaScript 邏輯區域 ---
+
+// 等待 HTML 載入完成再執行，避免抓不到元素
+document.addEventListener('DOMContentLoaded', () => {
+
+    const SIZE = 8;
+    const BLACK = 1;
+    const WHITE = 2;
+    const DIRS = [
+      [-1, -1], [-1, 0], [-1, 1],
+      [0, -1],           [0, 1],
+      [1, -1],  [1, 0],  [1, 1]
+    ];
+
+    // 進階 AI 權重表
+    const WEIGHTS = [
+      [ 100, -20,  10,   5,   5,  10, -20, 100],
+      [ -20, -50,  -2,  -2,  -2,  -2, -50, -20],
+      [  10,  -2,  -1,  -1,  -1,  -1,  -2,  10],
+      [   5,  -2,  -1,  -1,  -1,  -1,  -2,   5],
+      [   5,  -2,  -1,  -1,  -1,  -1,  -2,   5],
+      [  10,  -2,  -1,  -1,  -1,  -1,  -2,  10],
+      [ -20, -50,  -2,  -2,  -2,  -2, -50, -20],
+      [ 100, -20,  10,   5,   5,  10, -20, 100]
+    ];
+
+    // 變數
+    let board = [];
+    let currentPlayer = BLACK;
+    let isGameActive = false;
+    let isAnimating = false;
+
+    // DOM 元素
+    const boardEl = document.getElementById('board');
+    const scoreBlackEl = document.getElementById('score-black');
+    const scoreWhiteEl = document.getElementById('score-white');
+    const pBlackEl = document.getElementById('p-black');
+    const pWhiteEl = document.getElementById('p-white');
+    const msgEl = document.getElementById('msg-area');
+    const difficultyEl = document.getElementById('difficulty');
+    const modal = document.getElementById('result-modal');
+    const modalMsg = document.getElementById('modal-msg');
+    const modalBtn = document.getElementById('modal-btn');
+    const resetBtn = document.getElementById('reset');
+
+    // 初始化
+    function init() {
+        console.log("初始化遊戲...");
+        board = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
+        
+        // 初始佈局
+        const m = SIZE / 2;
+        board[m-1][m-1] = WHITE;
+        board[m][m]     = WHITE;
+        board[m-1][m]   = BLACK;
+        board[m][m-1]   = BLACK;
+
+        currentPlayer = BLACK;
+        isGameActive = true;
+        isAnimating = false;
+
+        renderBoard(); // 繪製格子
+        updateUI();
+        if(modal) modal.classList.remove('show');
+        
+        showLegalMoves();
+    }
+
+    // 繪製棋盤 DOM
+    function renderBoard() {
+        if(!boardEl) {
+            console.error("找不到棋盤元素！");
+            return;
+        }
+        boardEl.innerHTML = ''; // 清空
+        for (let r = 0; r < SIZE; r++) {
+            for (let c = 0; c < SIZE; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.r = r;
+                cell.dataset.c = c;
+                cell.onclick = () => handleCellClick(r, c);
+                
+                // 若有子則放入
+                if (board[r][c] !== 0) {
+                    addDiscToCell(cell, board[r][c]);
+                }
+                boardEl.appendChild(cell);
+            }
+        }
+    }
+
+    function addDiscToCell(cell, type) {
+        const disc = document.createElement('div');
+        disc.className = `disc ${type === WHITE ? 'is-white' : 'is-black'}`;
+        
+        const front = document.createElement('div');
+        front.className = 'face front';
+        const back = document.createElement('div');
+        back.className = 'face back';
+        
+        disc.appendChild(front);
+        disc.appendChild(back);
+        cell.appendChild(disc);
+    }
+
+    function isValidPos(r, c) {
+        return r >= 0 && r < SIZE && c >= 0 && c < SIZE;
+    }
+
+    function getFlips(r, c, player) {
+        if (board[r][c] !== 0) return [];
+        const opponent = player === BLACK ? WHITE : BLACK;
+        let flips = [];
+
+        for (const [dr, dc] of DIRS) {
+            let tr = r + dr, tc = c + dc;
+            let line = [];
+            while (isValidPos(tr, tc) && board[tr][tc] === opponent) {
+                line.push({ r: tr, c: tc });
+                tr += dr;
+                tc += dc;
+            }
+            if (line.length > 0 && isValidPos(tr, tc) && board[tr][tc] === player) {
+                flips = flips.concat(line);
+            }
+        }
+        return flips;
+    }
+
+    function getAllLegalMoves(player) {
+        let moves = [];
+        for (let r = 0; r < SIZE; r++) {
+            for (let c = 0; c < SIZE; c++) {
+                const flips = getFlips(r, c, player);
+                if (flips.length > 0) {
+                    moves.push({ r, c, flips });
+                }
+            }
+        }
+        return moves;
+    }
+
+    function showLegalMoves() {
+        // 先移除所有提示
+        document.querySelectorAll('.cell.valid').forEach(el => el.classList.remove('valid'));
+        
+        const moves = getAllLegalMoves(currentPlayer);
+        if (moves.length === 0 && isGameActive) {
+             // 沒步可走在 executeMove 會處理，這裡僅顯示
+             return; 
+        }
+
+        moves.forEach(m => {
+            const cell = document.querySelector(`.cell[data-r='${m.r}'][data-c='${m.c}']`);
+            if(cell) cell.classList.add('valid');
+        });
+    }
+
+    async function handleCellClick(r, c) {
+        if (!isGameActive || isAnimating || currentPlayer !== BLACK) return;
+
+        const flips = getFlips(r, c, BLACK);
+        if (flips.length === 0) return;
+
+        await executeMove(r, c, BLACK, flips);
+    }
+
+    async function executeMove(r, c, player, flips) {
+        isAnimating = true;
+
+        // 放置新子
+        board[r][c] = player;
+        const cell = document.querySelector(`.cell[data-r='${r}'][data-c='${c}']`);
+        // 清除提示
+        document.querySelectorAll('.cell.valid').forEach(el => el.classList.remove('valid'));
+        
+        if(cell) {
+            addDiscToCell(cell, player);
+            const d = cell.querySelector('.disc');
+            if(d) d.classList.add('new');
+        }
+
+        // 翻轉動畫
+        await flipPiecesSequentially(flips, player);
+
+        updateUI();
+        
+        // 換手判斷
+        const opponent = player === BLACK ? WHITE : BLACK;
+        const opponentMoves = getAllLegalMoves(opponent);
+        
+        if (opponentMoves.length > 0) {
+            currentPlayer = opponent;
+            updateUI();
+            isAnimating = false;
+            
+            if (currentPlayer === WHITE) {
+                setTimeout(computerTurn, 800);
+            } else {
+                showLegalMoves();
+            }
+        } else {
+            const myMoves = getAllLegalMoves(player);
+            if (myMoves.length > 0) {
+                msgEl.textContent = `${opponent === BLACK ? "黑" : "白"}棋無步可走，輪回${player === BLACK ? "黑" : "白"}棋`;
+                isAnimating = false;
+                if (player === WHITE) setTimeout(computerTurn, 1000);
+                else showLegalMoves();
+            } else {
+                endGame();
+            }
+        }
+    }
+
+    async function flipPiecesSequentially(flips, player) {
+        flips.forEach(pt => board[pt.r][pt.c] = player);
+
+        for (const pt of flips) {
+            const cell = document.querySelector(`.cell[data-r='${pt.r}'][data-c='${pt.c}']`);
+            const disc = cell ? cell.querySelector('.disc') : null;
+            if (disc) {
+                if (player === WHITE) {
+                    disc.classList.remove('is-black');
+                    disc.classList.add('is-white');
+                } else {
+                    disc.classList.remove('is-white');
+                    disc.classList.add('is-black');
+                }
+            }
+            await new Promise(resolve => setTimeout(resolve, 150));
+        }
+    }
+
+    function computerTurn() {
+        if (!isGameActive) return;
+        const diff = difficultyEl.value;
+        const moves = getAllLegalMoves(WHITE);
+        
+        if (moves.length === 0) return; 
+
+        let bestMove = null;
+
+        if (diff === 'easy') {
+            moves.sort((a, b) => b.flips.length - a.flips.length);
+            bestMove = moves[0];
+        } else {
+            // 進階
+            let maxScore = -Infinity;
+            for (const move of moves) {
+                let score = WEIGHTS[move.r][move.c]; 
+                score += move.flips.length; 
+                if (score > maxScore) {
+                    maxScore = score;
+                    bestMove = move;
+                }
+            }
+        }
+        executeMove(bestMove.r, bestMove.c, WHITE, bestMove.flips);
+    }
+
+    function updateUI() {
+        let b = 0, w = 0;
+        for(let r=0; r<SIZE; r++)
+            for(let c=0; c<SIZE; c++)
+                if(board[r][c]===BLACK) b++;
+                else if(board[r][c]===WHITE) w++;
+        
+        scoreBlackEl.innerText = b;
+        scoreWhiteEl.innerText = w;
+
+        if (currentPlayer === BLACK) {
+            pBlackEl.classList.add('active');
+            pWhiteEl.classList.remove('active');
+            msgEl.textContent = "輪到玩家 (黑) 下棋";
+        } else {
+            pWhiteEl.classList.add('active');
+            pBlackEl.classList.remove('active');
+            msgEl.textContent = "電腦 (白) 思考中...";
+        }
+    }
+
+    function endGame() {
+        isGameActive = false;
+        const b = parseInt(scoreBlackEl.innerText);
+        const w = parseInt(scoreWhiteEl.innerText);
+        let msg = `黑: ${b} - 白: ${w}<br>`;
+        if (b > w) msg += "恭喜！你贏了！";
+        else if (w > b) msg += "電腦獲勝！";
+        else msg += "平手！";
+
+        modalMsg.innerHTML = msg;
+        modal.classList.add('show');
+    }
+
+    resetBtn.addEventListener('click', init);
+    modalBtn.addEventListener('click', init);
+    difficultyEl.addEventListener('change', init);
+
+    // 啟動
+    init();
+});
+</script>
+</body>
+</html>
