@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>HW_FT - 圍棋人機對戰</title>
+  <title>1112917-FinalTerm</title>
   <style>
     /* --- CSS 樣式區域 --- */
     :root {
@@ -267,7 +267,7 @@ const EMPTY = 0;
 
 // 遊戲狀態
 let boardState = []; // 2D 陣列
-let boardSize = 13;
+let boardSize = 9; // 預設改為 9
 let currentPlayer = BLACK;
 let prisoners = { [BLACK]: 0, [WHITE]: 0 }; // 提子數 (黑棋提了白棋多少子)
 let lastMove = null; // {r, c}
