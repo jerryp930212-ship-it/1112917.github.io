@@ -9,9 +9,8 @@
     :root {
       --bg: #1a1c29;          /* 背景深色 */
       --board-bg: #dcb35c;    /* 棋盤木頭色 */
-      --line-color: #000;     /* 格線顏色 */
       --text: #e7e8ee;        /* 文字顏色 */
-      --cell-size: 36px;      /* 交叉點大小 (依據 13路/9路 調整) */
+      --cell-size: 36px;      /* 交叉點大小 (動態調整) */
     }
 
     * { box-sizing: border-box; }
@@ -28,7 +27,7 @@
       padding: 20px;
     }
 
-    h1 { margin: 10px 0 20px 0; font-size: 28px; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    h1 { margin: 10px 0 10px 0; font-size: 28px; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
     /* --- 狀態列 --- */
     .status-bar {
@@ -38,7 +37,7 @@
       background: rgba(255, 255, 255, 0.08);
       padding: 15px 30px;
       border-radius: 50px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       width: 100%;
       max-width: 500px;
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -69,19 +68,41 @@
     .stone-icon.white { background: #fff; border: 2px solid #ccc; }
 
     .score-label { font-size: 12px; color: #aaa; }
-    .prisoner-count { font-size: 20px; font-weight: 800; }
+    .live-count { font-size: 24px; font-weight: 800; color: #4dd0e1; } /* 改顏色突顯 */
     .vs { font-weight: bold; font-style: italic; color: #666; font-size: 20px; }
 
-    .msg-area {
-      height: 24px;
+    /* --- 訊息與虛手提示 --- */
+    .info-wrapper {
+      text-align: center;
       margin-bottom: 15px;
-      color: #4dd0e1;
+    }
+
+    .msg-area {
+      color: #ffd700;
       font-size: 16px;
       font-weight: bold;
       letter-spacing: 1px;
+      margin-bottom: 5px;
+      min-height: 24px;
     }
 
-    /* --- 棋盤區域 (重點：畫線) --- */
+    /* 新增：虛手計數器 */
+    .pass-indicator {
+      font-size: 13px;
+      color: #aaa;
+      background: rgba(0,0,0,0.3);
+      padding: 4px 12px;
+      border-radius: 10px;
+      display: inline-block;
+      transition: all 0.3s;
+    }
+    .pass-indicator.warning {
+      color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.15);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+    }
+
+    /* --- 棋盤區域 --- */
     .board-wrapper {
       background: #222;
       padding: 10px;
@@ -91,14 +112,12 @@
 
     .board {
       display: grid;
-      /* 格子大小動態生成 */
       background-color: var(--board-bg);
       border: 2px solid #000;
       position: relative;
-      cursor: crosshair; /* 準心鼠標 */
+      cursor: crosshair;
     }
 
-    /* 交叉點 */
     .intersection {
       width: var(--cell-size);
       height: var(--cell-size);
@@ -108,62 +127,30 @@
       align-items: center;
     }
 
-    /* 利用偽元素畫格線 (十字) */
-    .intersection::before { /* 橫線 */
-      content: '';
-      position: absolute;
-      top: 50%; left: 0;
-      width: 100%; height: 1px;
-      background: #000;
-      z-index: 0;
-    }
-    .intersection::after { /* 直線 */
-      content: '';
-      position: absolute;
-      left: 50%; top: 0;
-      height: 100%; width: 1px;
-      background: #000;
-      z-index: 0;
-    }
+    /* 畫線 */
+    .intersection::before { content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: #000; z-index: 0; }
+    .intersection::after { content: ''; position: absolute; left: 50%; top: 0; height: 100%; width: 1px; background: #000; z-index: 0; }
     
-    /* 星位 (天元) */
-    .intersection.star::before {
-        height: 4px; width: 4px; border-radius: 50%; background: #000; top: calc(50% - 2px); left: calc(50% - 2px); z-index: 1;
-    }
-    .intersection.star::after { display: none; } /* 避免覆蓋 */
+    /* 星位 */
+    .intersection.star::before { height: 4px; width: 4px; border-radius: 50%; background: #000; top: calc(50% - 2px); left: calc(50% - 2px); z-index: 1; }
+    .intersection.star::after { display: none; }
 
-    /* --- 3D 棋子 --- */
+    /* --- 棋子 --- */
     .stone {
       width: 85%;
       height: 85%;
       border-radius: 50%;
       position: relative;
-      z-index: 10; /* 浮在線上面 */
+      z-index: 10;
       box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
       transform: scale(0);
       animation: popIn 0.2s forwards;
     }
+    .stone.black { background: radial-gradient(circle at 30% 30%, #555, #000); }
+    .stone.white { background: radial-gradient(circle at 30% 30%, #fff, #ddd); }
+    .stone.last-move::after { content: ''; position: absolute; width: 30%; height: 30%; background: rgba(255, 0, 0, 0.7); top: 35%; left: 35%; border-radius: 50%; }
 
-    .stone.black {
-      background: radial-gradient(circle at 30% 30%, #555, #000);
-    }
-    .stone.white {
-      background: radial-gradient(circle at 30% 30%, #fff, #ddd);
-    }
-
-    /* 最後一手標記 */
-    .stone.last-move::after {
-      content: '';
-      position: absolute;
-      width: 30%; height: 30%;
-      background: rgba(255, 0, 0, 0.7);
-      top: 35%; left: 35%;
-      border-radius: 50%;
-    }
-
-    @keyframes popIn {
-      to { transform: scale(1); }
-    }
+    @keyframes popIn { to { transform: scale(1); } }
 
     /* --- 控制區 --- */
     .controls {
@@ -185,10 +172,13 @@
       transition: all 0.2s;
     }
     button:hover { background: #3b4275; transform: translateY(-2px); }
-    button:active { transform: scale(0.95); }
     
     button.pass-btn { background: #e57373; border-color: #ef5350; }
     button.pass-btn:hover { background: #ef5350; }
+
+    /* 新增：返回首頁按鈕樣式 */
+    button.home-btn { background: #4db6ac; border-color: #009688; }
+    button.home-btn:hover { background: #26a69a; }
 
     /* --- 彈窗 --- */
     .modal {
@@ -211,28 +201,32 @@
     }
     .modal-content h2 { color: #ffe066; }
     .modal-content p { color: #ccc; line-height: 1.6; }
+    .modal-content button { margin-top: 10px; }
 
   </style>
 </head>
 <body>
 
-  <h1>HW_FT - 圍棋對戰 (Go)</h1>
+  <h1>1112917-FinalTerm 圍棋對戰</h1>
 
   <div class="status-bar">
     <div class="player-info" id="p-black">
       <div class="stone-icon black"></div>
-      <span class="score-label">提子數 (俘虜)</span>
-      <span class="prisoner-count" id="pris-black">0</span>
+      <span class="score-label">盤面活棋</span>
+      <span class="live-count" id="count-black">0</span>
     </div>
     <div class="vs">VS</div>
     <div class="player-info" id="p-white">
       <div class="stone-icon white"></div>
-      <span class="score-label">提子數 (俘虜)</span>
-      <span class="prisoner-count" id="pris-white">0</span>
+      <span class="score-label">盤面活棋</span>
+      <span class="live-count" id="count-white">0</span>
     </div>
   </div>
 
-  <div class="msg-area" id="msg-area">輪到黑棋 (玩家) 下子</div>
+  <div class="info-wrapper">
+    <div class="msg-area" id="msg-area">輪到黑棋 (玩家) 下子</div>
+    <div id="pass-indicator" class="pass-indicator">連續虛手: 0 / 2 (達 2 次即終局)</div>
+  </div>
 
   <div class="board-wrapper">
     <div id="board" class="board"></div>
@@ -240,12 +234,13 @@
 
   <div class="controls">
     <select id="board-size">
-      <option value="9">9路 (入門)</option>
-      <option value="13" selected>13路 (標準)</option>
+      <option value="9" selected>9路 (作業要求)</option>
+      <option value="13">13路 (標準)</option>
       <option value="19">19路 (專業)</option>
     </select>
     <button id="btn-pass" class="pass-btn">虛手 (Pass)</button>
     <button id="btn-restart">重開一局</button>
+    <button onclick="location.href='index.html'" class="home-btn">返回個人頁面</button>
   </div>
 
   <div id="result-modal" class="modal">
@@ -260,55 +255,49 @@
 <script>
 // --- JavaScript 邏輯 ---
 
-// 常數
-const BLACK = 1;
-const WHITE = 2;
+const BLACK = 1; 
+const WHITE = 2; 
 const EMPTY = 0;
 
-// 遊戲狀態
-let boardState = []; // 2D 陣列
-let boardSize = 9; // 預設改為 9
+let boardState = []; 
+let boardSize = 9; 
 let currentPlayer = BLACK;
-let prisoners = { [BLACK]: 0, [WHITE]: 0 }; // 提子數 (黑棋提了白棋多少子)
-let lastMove = null; // {r, c}
-let passCount = 0; // 連續虛手次數，達2次結束
+let prisoners = { [BLACK]: 0, [WHITE]: 0 }; // 仍需保留變數以供終局計算
+let passCount = 0; 
 let isGameActive = false;
 let isComputerTurn = false;
 
-// DOM
+// DOM 元素
 const boardEl = document.getElementById('board');
 const msgEl = document.getElementById('msg-area');
-const prisBlackEl = document.getElementById('pris-black');
-const prisWhiteEl = document.getElementById('pris-white');
+// 修改綁定對象為新的計分板
+const countBlackEl = document.getElementById('count-black');
+const countWhiteEl = document.getElementById('count-white');
 const pBlackEl = document.getElementById('p-black');
 const pWhiteEl = document.getElementById('p-white');
+const passIndicatorEl = document.getElementById('pass-indicator');
 const sizeSelect = document.getElementById('board-size');
 
-// --- 初始化 ---
 function initGame() {
     boardSize = parseInt(sizeSelect.value);
     boardState = Array.from({ length: boardSize }, () => Array(boardSize).fill(EMPTY));
     currentPlayer = BLACK;
     prisoners = { [BLACK]: 0, [WHITE]: 0 };
-    lastMove = null;
     passCount = 0;
     isGameActive = true;
     isComputerTurn = false;
     
     closeModal();
     renderBoard();
-    updateUI();
+    updateUI(); // 這會更新盤面子數為 0
+    msgEl.textContent = "輪到黑棋 (玩家) 下子";
 }
 
-// --- 繪製棋盤 ---
 function renderBoard() {
     boardEl.innerHTML = '';
-    
-    // 設定 CSS Grid
     boardEl.style.gridTemplateColumns = `repeat(${boardSize}, var(--cell-size))`;
     boardEl.style.gridTemplateRows = `repeat(${boardSize}, var(--cell-size))`;
 
-    // 調整格子大小以適應畫面
     let newSize = boardSize === 9 ? 42 : (boardSize === 13 ? 34 : 26);
     document.documentElement.style.setProperty('--cell-size', `${newSize}px`);
 
@@ -319,23 +308,18 @@ function renderBoard() {
             intersection.dataset.r = r;
             intersection.dataset.c = c;
             
-            // 處理星位 (Star points)
             if (isStarPoint(r, c, boardSize)) {
-                const star = document.createElement('div');
-                star.style.cssText = "width: 6px; height: 6px; background: #000; border-radius: 50%; position: absolute; z-index: 1;";
-                intersection.appendChild(star);
+                intersection.classList.add('star');
             }
-
             intersection.onclick = () => handleInput(r, c);
             boardEl.appendChild(intersection);
         }
     }
 }
 
-// 判斷是否為星位
 function isStarPoint(r, c, size) {
-    if (size === 9 && (r===2||r===6) && (c===2||c===6)) return true; // 9路星位
-    if (size === 9 && r===4 && c===4) return true; // 天元
+    if (size === 9 && (r===2||r===6) && (c===2||c===6)) return true;
+    if (size === 9 && r===4 && c===4) return true;
     if (size === 13 && (r===3||r===9) && (c===3||c===9)) return true;
     if (size === 13 && r===6 && c===6) return true;
     if (size === 19) {
@@ -345,89 +329,39 @@ function isStarPoint(r, c, size) {
     return false;
 }
 
-// 放置棋子 (視覺)
-function placeStoneVisual(r, c, player) {
-    const cell = document.querySelector(`.intersection[data-r='${r}'][data-c='${c}']`);
-    if (!cell) return;
-    
-    // 移除舊子 (如果有的話)
-    const oldStone = cell.querySelector('.stone');
-    if (oldStone) oldStone.remove();
+// --- 邏輯判定 ---
 
-    if (player === EMPTY) return;
-
-    const stone = document.createElement('div');
-    stone.className = `stone ${player === BLACK ? 'black' : 'white'}`;
-    cell.appendChild(stone);
-}
-
-// 移除棋子 (視覺)
-function removeStoneVisual(r, c) {
-    const cell = document.querySelector(`.intersection[data-r='${r}'][data-c='${c}']`);
-    const stone = cell ? cell.querySelector('.stone') : null;
-    if (stone) {
-        // 加個消失動畫 (選用)
-        stone.style.transform = 'scale(0)';
-        setTimeout(() => stone.remove(), 200);
-    }
-}
-
-// 標記最後一手
-function markLastMove(r, c) {
-    document.querySelectorAll('.last-move').forEach(el => el.classList.remove('last-move'));
-    if (r === null) return;
-    const cell = document.querySelector(`.intersection[data-r='${r}'][data-c='${c}']`);
-    const stone = cell ? cell.querySelector('.stone') : null;
-    if (stone) stone.classList.add('last-move');
-}
-
-// --- 圍棋邏輯核心 (氣與提子) ---
-
-// 1. 檢查落子合法性
 function isValidMove(r, c, player) {
     if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) return false;
-    if (boardState[r][c] !== EMPTY) return false; // 已有子
+    if (boardState[r][c] !== EMPTY) return false; 
 
-    // 試著放子
     const tempBoard = JSON.parse(JSON.stringify(boardState));
     tempBoard[r][c] = player;
 
-    // 檢查是否有提子 (對手死子)
     const opponent = player === BLACK ? WHITE : BLACK;
     const captured = findCaptures(tempBoard, r, c, opponent);
-    
-    // 如果有提子，這步一定合法 (除了劫，但這裡先簡化不處理打劫)
     if (captured.length > 0) return true;
 
-    // 如果沒提子，檢查自己有沒有氣 (禁入點)
     const liberties = countLiberties(tempBoard, r, c);
-    if (liberties === 0) return false; // 自殺手，不合法
+    if (liberties === 0) return false; 
 
     return true;
 }
 
-// 2. 計算某顆子所在群組的氣
 function countLiberties(board, r, c) {
     const group = getGroup(board, r, c);
     const liberties = new Set();
-    
     group.forEach(pt => {
-        const neighbors = [
-            {r: pt.r-1, c: pt.c}, {r: pt.r+1, c: pt.c},
-            {r: pt.r, c: pt.c-1}, {r: pt.r, c: pt.c+1}
-        ];
+        const neighbors = [{r: pt.r-1, c: pt.c}, {r: pt.r+1, c: pt.c}, {r: pt.r, c: pt.c-1}, {r: pt.r, c: pt.c+1}];
         neighbors.forEach(n => {
             if (n.r >= 0 && n.r < boardSize && n.c >= 0 && n.c < boardSize) {
-                if (board[n.r][n.c] === EMPTY) {
-                    liberties.add(`${n.r},${n.c}`);
-                }
+                if (board[n.r][n.c] === EMPTY) liberties.add(`${n.r},${n.c}`);
             }
         });
     });
     return liberties.size;
 }
 
-// 3. 找出相連的群組 (Flood Fill)
 function getGroup(board, r, c) {
     const color = board[r][c];
     const group = [];
@@ -438,12 +372,7 @@ function getGroup(board, r, c) {
     while (queue.length > 0) {
         const curr = queue.pop();
         group.push(curr);
-
-        const neighbors = [
-            {r: curr.r-1, c: curr.c}, {r: curr.r+1, c: curr.c},
-            {r: curr.r, c: curr.c-1}, {r: curr.r, c: curr.c+1}
-        ];
-
+        const neighbors = [{r: curr.r-1, c: curr.c}, {r: curr.r+1, c: curr.c}, {r: curr.r, c: curr.c-1}, {r: curr.r, c: curr.c+1}];
         neighbors.forEach(n => {
             if (n.r >= 0 && n.r < boardSize && n.c >= 0 && n.c < boardSize) {
                 const key = `${n.r},${n.c}`;
@@ -457,13 +386,9 @@ function getGroup(board, r, c) {
     return group;
 }
 
-// 4. 尋找並移除死子
 function handleCaptures(r, c, player) {
     const opponent = player === BLACK ? WHITE : BLACK;
-    const neighbors = [
-        {r: r-1, c: c}, {r: r+1, c: c}, {r: r, c: c-1}, {r: r, c: c+1}
-    ];
-
+    const neighbors = [{r: r-1, c: c}, {r: r+1, c: c}, {r: r, c: c-1}, {r: r, c: c+1}];
     let totalCaptured = 0;
 
     neighbors.forEach(n => {
@@ -471,7 +396,6 @@ function handleCaptures(r, c, player) {
             if (boardState[n.r][n.c] === opponent) {
                 const libs = countLiberties(boardState, n.r, n.c);
                 if (libs === 0) {
-                    // 氣為 0，提子
                     const group = getGroup(boardState, n.r, n.c);
                     group.forEach(stone => {
                         boardState[stone.r][stone.c] = EMPTY;
@@ -482,54 +406,62 @@ function handleCaptures(r, c, player) {
             }
         }
     });
-
-    // 更新提子數 (player 吃掉了 opponent)
     prisoners[player] += totalCaptured;
 }
 
-// 輔助：模擬時用的提子檢查
 function findCaptures(board, r, c, targetColor) {
-    const neighbors = [
-        {r: r-1, c: c}, {r: r+1, c: c}, {r: r, c: c-1}, {r: r, c: c+1}
-    ];
+    const neighbors = [{r: r-1, c: c}, {r: r+1, c: c}, {r: r, c: c-1}, {r: r, c: c+1}];
     let captured = [];
     neighbors.forEach(n => {
         if (n.r >= 0 && n.r < boardSize && n.c >= 0 && n.c < boardSize) {
             if (board[n.r][n.c] === targetColor) {
-                if (countLiberties(board, n.r, n.c) === 0) {
-                    captured.push(n);
-                }
+                if (countLiberties(board, n.r, n.c) === 0) captured.push(n);
             }
         }
     });
     return captured;
 }
 
-// --- 遊戲流程控制 ---
+// --- 介面操作 ---
+
+function placeStoneVisual(r, c, player) {
+    const cell = document.querySelector(`.intersection[data-r='${r}'][data-c='${c}']`);
+    if (!cell) return;
+    const oldStone = cell.querySelector('.stone');
+    if (oldStone) oldStone.remove();
+    const stone = document.createElement('div');
+    stone.className = `stone ${player === BLACK ? 'black' : 'white'}`;
+    cell.appendChild(stone);
+    
+    document.querySelectorAll('.last-move').forEach(el => el.classList.remove('last-move'));
+    stone.classList.add('last-move');
+}
+
+function removeStoneVisual(r, c) {
+    const cell = document.querySelector(`.intersection[data-r='${r}'][data-c='${c}']`);
+    const stone = cell ? cell.querySelector('.stone') : null;
+    if (stone) {
+        stone.style.transform = 'scale(0)';
+        setTimeout(() => stone.remove(), 200);
+    }
+}
 
 function handleInput(r, c) {
     if (!isGameActive || isComputerTurn || boardState[r][c] !== EMPTY) return;
-    
     if (isValidMove(r, c, BLACK)) {
         makeMove(r, c, BLACK);
     } else {
-        alert("無效落子 (可能是自殺手或已有子)");
+        alert("禁著點 (自殺手) 或位置無效");
     }
 }
 
 function makeMove(r, c, player) {
-    // 1. 落子
     boardState[r][c] = player;
     placeStoneVisual(r, c, player);
-    lastMove = {r, c};
-    markLastMove(r, c);
-    passCount = 0; // 重置虛手
-
-    // 2. 處理提子
+    passCount = 0; 
+    
     handleCaptures(r, c, player);
-
-    // 3. 換手與 UI 更新
-    updateUI();
+    updateUI(); // 這裡會重新計算活棋數
     
     const nextPlayer = player === BLACK ? WHITE : BLACK;
     currentPlayer = nextPlayer;
@@ -543,17 +475,13 @@ function makeMove(r, c, player) {
     }
 }
 
-// --- 電腦 AI (Heuristic) ---
 function computerAI() {
     if (!isGameActive) return;
 
-    // 1. 嘗試叫吃 (Atari) 或 提子
-    // 掃描盤面，如果某步能讓對手氣變 0，下那裡
     let bestMove = null;
     let maxScore = -Infinity;
-
-    // 簡單的亂數打散，避免每次都下一樣的地方
     const candidates = [];
+
     for(let r=0; r<boardSize; r++) {
         for(let c=0; c<boardSize; c++) {
             if (boardState[r][c] === EMPTY) {
@@ -565,33 +493,23 @@ function computerAI() {
     }
 
     if (candidates.length === 0) {
-        handlePass(); // 沒地方下，虛手
+        handlePass(); 
         return;
     }
 
-    // 評估函數
     candidates.forEach(move => {
-        let score = Math.random() * 10; // 基礎隨機分
-
-        // 模擬落子
+        let score = Math.random() * 10; 
         const tempBoard = JSON.parse(JSON.stringify(boardState));
         tempBoard[move.r][move.c] = WHITE;
         
-        // A. 攻擊：看能不能吃掉黑棋
         const caps = findCaptures(tempBoard, move.r, move.c, BLACK);
         if (caps.length > 0) score += 1000 + caps.length * 100;
 
-        // B. 佔角與邊 (金角銀邊草肚皮)
-        const distToCenter = Math.abs(move.r - boardSize/2) + Math.abs(move.c - boardSize/2);
-        score += (10 - distToCenter); // 越靠近中間越低分? 不對，圍棋初期喜愛 3-4 線
-        
-        // 簡單權重：3線 4線比較好
-        if ((move.r === 2 || move.r === boardSize-3) || (move.c === 2 || move.c === boardSize-3)) score += 20;
-
-        // C. 避免自己被吃 (簡單判斷氣)
         const libs = countLiberties(tempBoard, move.r, move.c);
-        if (libs === 1) score -= 500; // 下了只剩一氣，危險
-        if (libs >= 4) score += 50;   // 氣多，安全
+        if (libs === 1) score -= 500; 
+        if (libs >= 4) score += 50;
+
+        if ((move.r === 2 || move.r === boardSize-3) || (move.c === 2 || move.c === boardSize-3)) score += 20;
 
         if (score > maxScore) {
             maxScore = score;
@@ -603,18 +521,19 @@ function computerAI() {
     isComputerTurn = false;
 }
 
-// --- 虛手與結束 ---
 function handlePass() {
     passCount++;
     const playerStr = currentPlayer === BLACK ? "黑棋" : "白棋";
     msgEl.textContent = `${playerStr} 選擇虛手 (Pass)`;
+
+    // 更新 UI 虛手次數
+    updateUI(); 
 
     if (passCount >= 2) {
         endGame();
         return;
     }
 
-    // 換手
     currentPlayer = currentPlayer === BLACK ? WHITE : BLACK;
     if (currentPlayer === WHITE) {
         isComputerTurn = true;
@@ -627,8 +546,8 @@ function handlePass() {
 
 function endGame() {
     isGameActive = false;
-    // 簡易判斷：只算提子數 (正式規則要算地，太複雜)
-    // 為了作業效果，我們用「提子數 + 盤面棋子數」來當作分數
+    
+    // 計算活棋 (盤面上還存在的棋子)
     let blackStones = 0;
     let whiteStones = 0;
     for(let r=0; r<boardSize; r++){
@@ -638,12 +557,13 @@ function endGame() {
         }
     }
 
+    // 分數判定 (使用盤面活棋 + 提子 + 貼目)
     const finalBlack = prisoners[BLACK] + blackStones;
-    const finalWhite = prisoners[WHITE] + whiteStones + 6.5; // 貼目
+    const finalWhite = prisoners[WHITE] + whiteStones + 6.5; 
 
-    let msg = `雙方虛手，遊戲結束！<br><br>`;
-    msg += `黑方 (盤面${blackStones} + 提子${prisoners[BLACK]}) = <b>${finalBlack}</b><br>`;
-    msg += `白方 (盤面${whiteStones} + 提子${prisoners[WHITE]} + 貼目6.5) = <b>${finalWhite}</b><br><br>`;
+    let msg = `雙方連續虛手，對局結束！<br><hr>`;
+    msg += `<b>黑棋</b><br>活棋:${blackStones} + 提子:${prisoners[BLACK]} = <b>${finalBlack}</b><br><br>`;
+    msg += `<b>白棋</b><br>活棋:${whiteStones} + 提子:${prisoners[WHITE]} + 貼目:6.5 = <b>${finalWhite}</b><br><hr>`;
     
     if (finalBlack > finalWhite) msg += "<span style='color:#ff6b6b; font-size:24px'>黑棋獲勝！</span>";
     else msg += "<span style='color:#4dd0e1; font-size:24px'>白棋獲勝！</span>";
@@ -652,9 +572,27 @@ function endGame() {
     document.getElementById('result-modal').classList.add('show');
 }
 
+// 2. 更新統計資料與虛手狀態
 function updateUI() {
-    prisBlackEl.innerText = prisoners[BLACK];
-    prisWhiteEl.innerText = prisoners[WHITE];
+    // 統計盤面活棋數
+    let bCount = 0;
+    let wCount = 0;
+    for(let r=0; r<boardSize; r++){
+        for(let c=0; c<boardSize; c++){
+            if(boardState[r][c] === BLACK) bCount++;
+            else if(boardState[r][c] === WHITE) wCount++;
+        }
+    }
+    countBlackEl.innerText = bCount;
+    countWhiteEl.innerText = wCount;
+
+    // 顯示虛手狀態
+    passIndicatorEl.textContent = `連續虛手: ${passCount} / 2 (達 2 次即終局)`;
+    if (passCount > 0) {
+        passIndicatorEl.classList.add('warning');
+    } else {
+        passIndicatorEl.classList.remove('warning');
+    }
 
     if (currentPlayer === BLACK) {
         pBlackEl.classList.add('active');
@@ -676,7 +614,6 @@ document.getElementById('btn-pass').onclick = () => {
 };
 sizeSelect.onchange = initGame;
 
-// 啟動
 initGame();
 
 </script>
